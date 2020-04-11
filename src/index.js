@@ -1,38 +1,38 @@
-require('dotenv').config();
 const Discord = require('discord.js');
-const bot = new Discord.Client();
-const fs = require('fs');
+const Tail = require('tail-file');
+
+require('dotenv').config();
 const TOKEN = process.env.TOKEN;
 const LOGFILE = process.env.LOGFILE;
+const CHANNEL_ID = process.env.CHANNEL_ID;
 
-// console.log(LOGFILE);
-const channelID = '684255279025750018';
+const bot = new Discord.Client();
 let tradeLogChannel;
+
+const log = new Tail(LOGFILE);
+
+log.on('line', (line) => {
+  console.log(line);
+  const token = 'Summary';
+  const message = JSON.parse(line).message;
+  const index = message.indexOf(token);
+  if(index !== -1) {
+    //const mes = message.slice(index + token.length + 2);
+    tradeLogChannel.send(message);
+  }
+});
+
+log.start();
 
 bot.login(TOKEN);
 
 bot.on('ready', () => {
   console.info(`Logged in as ${bot.user.tag}!`);
-  // console.log(bot);
-  tradeLogChannel = bot.channels.cache.get(channelID);
-  // console.log(tradeLogChannel);
-});
-
-fs.watchFile(LOGFILE, (eventType, data) => {
-  if(eventType === 'change') {
-    // console.log(data);
-    const token = 'Summary';
-    const index = data.message.indexOf(token);
-    if(index !== -1) {
-      const message = data.message.slice(index + token.length);
-      tradeLogChannel.send(message);
-    }
-  }
-
+  tradeLogChannel = bot.channels.cache.get(CHANNEL_ID);
 });
 
 bot.on('message', msg => {
-  if (msg.content === 'ping') {
+  if (msg.content === '!cat') {
     msg.reply('pong');
   }
 });
