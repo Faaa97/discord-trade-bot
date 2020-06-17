@@ -9,6 +9,8 @@ const CHANNEL_ID = process.env.CHANNEL_ID;
 const bot = new Discord.Client();
 let tradeLogChannel;
 
+/* Trade log config */ 
+
 const log = new Tail(LOGFILE);
 
 log.on('line', (line) => {
@@ -17,12 +19,14 @@ log.on('line', (line) => {
   const message = JSON.parse(line).message;
   const index = message.indexOf(token);
   if(index !== -1) {
-    //const mes = message.slice(index + token.length + 2);
-    tradeLogChannel.send(message);
+    const mes = message.slice(index + token.length + 2);
+    tradeLogChannel.send(mes);
   }
 });
 
 log.start();
+
+/* Bot config */
 
 bot.login(TOKEN);
 
