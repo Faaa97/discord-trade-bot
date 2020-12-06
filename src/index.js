@@ -9,6 +9,8 @@ const CHANNEL_ID = process.env.CHANNEL_ID;
 const bot = new Discord.Client();
 let tradeLogChannel;
 
+const getPrices = require('./prices.js');
+
 
 const trades = [];
 const stats = {
@@ -111,13 +113,22 @@ bot.on('ready', () => {
 });
 
 bot.on('message', msg => {
+	console.log(msg);
+	let match;
   if (msg.content === '!queue') {
     const message = '```json\n' + JSON.stringify(trades, null, 2) + '\n```';
     msg.reply(message);
   } else if(msg.content === '!stats') {
     const message = '```json\n' + JSON.stringify(stats, null, 2) + '\n```';
     msg.reply(message);
-  } /*else {
+  } else if(match = msg.content.match(/!price (.*)/)) {
+	
+	getPrices(match[1]).then((price) => {
+		const message = '```json\n' + JSON.stringify(price, null, 2) + '\n```';
+    msg.reply(message);
+	});
+    
+  }/*else {
     const message = 'Available commands:\n\t!queue\n\t!stats';
     msg.reply(message);
   }*/
