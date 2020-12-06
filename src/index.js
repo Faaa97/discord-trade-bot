@@ -11,6 +11,19 @@ let tradeLogChannel;
 
 
 const trades = [];
+const stats = {
+  trades: 0,
+  min_time: 1000000,
+  max_time: 0,
+  mean_time: 0,
+};
+
+const addNewTradeToStats = (time) => {
+  stats.trades++;
+  stats.min_time = Math.min(time, stats.min_time);
+  stats.max_time = Math.max(time, stats.max_time);
+  stats.mean_time = stats.mean_time + ((time - stats.mean_time) / stats.trades);
+}
 
 const checkTrades = setInterval(() => {
   const now = Date.now();
@@ -23,11 +36,11 @@ const checkTrades = setInterval(() => {
 
   toRemove.forEach((id) => {
     const trade = removeTradeFromQueue(id);
-    const message = 'Trade stuck from ' + trade.id;
+    const message = 'Trade stuck: ' + trade.id + ' (from ' + trade.steamId + ')';
     console.log(message);
     tradeLogChannel.send(message);
   });
-}, 30 * 60 * 1000)
+}, 5 * 60 * 1000)
 
 const makeTrade = (num, steamid, message, start) => {
   return {
@@ -47,21 +60,17 @@ const removeTradeFromQueue = (id) => {
   for(let i = 0; i < trades.length; i++) {
     if(trades[i].id === id) {
       const trade = trades[i];
-      trades.slice(i, 1);
+      trades.splice(i, 1);
       return trade;
     }
   }
 }
-
-
-
 
 /* Trade log config */
 
 const log = new Tail(LOGFILE);
 
 log.on('line', (line) => {
-  // console.log(line);  
   const trade = JSON.parse(line);
   const message = trade.message;
 
@@ -81,10 +90,11 @@ log.on('line', (line) => {
     } else if(message.includes('has been accepted')) {
       const t = removeTradeFromQueue(offerNum);
       const delay = (new Date(trade.timestamp) - t.startTime) / 1000;
-      const realMessage = t.message + '\nDelay: ' + delay + ' s';
+      const realMessage = 'Trade ' + t.id + ' from ' + t.steamId + '\n' + t.message + '\nDelay: ' + delay + ' s';
 
-      console.log('New trade: ' + realMessage);
-      tradeLogChannel.send(realMessage);
+      addNewTradeToStats(delay);
+      //console.log('New trade: ' + realMessage);
+      tradeLogChannel.send('```' + realMessage + '```');
     }
   }
 });
@@ -101,7 +111,14 @@ bot.on('ready', () => {
 });
 
 bot.on('message', msg => {
-  if (msg.content === '!cat') {
-    msg.reply('pong');
-  }
+  if (msg.content === '!queue') {
+    const message = '```json\n' + JSON.stringify(trades, null, 2) + '\n```';
+    msg.reply(message);
+  } else if(msg.content === '!stats') {
+    const message = '```json\n' + JSON.stringify(stats, null, 2) + '\n```';
+    msg.reply(message);
+  } /*else {
+    const message = 'Available commands:\n\t!queue\n\t!stats';
+    msg.reply(message);
+  }*/
 });
