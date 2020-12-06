@@ -113,7 +113,6 @@ bot.on('ready', () => {
 });
 
 bot.on('message', msg => {
-	console.log(msg);
 	let match;
   if (msg.content === '!queue') {
     const message = '```json\n' + JSON.stringify(trades, null, 2) + '\n```';
