@@ -44,6 +44,11 @@ const getPrices = (item) => {
   };
   return new Promise((resolve, reject) => {
     get(url + args + itemUrl).then((data) => {
+      try {
+
+      } catch (error) {
+        reject("Server unavailable.");
+      }
       const dataObj = JSON.parse(data);
       const listings = {
         buy: dataObj.buy.listings.filter(comparator),
